@@ -1489,7 +1489,17 @@ document.getElementById('settBg').addEventListener('click', e => {
 document.getElementById('dataBg').addEventListener('click', e => {
   if (e.target===document.getElementById('dataBg')) closeDataModal();
 });
-document.addEventListener('keydown', e => { if(e.key==='F11'){e.preventDefault();toggleFS();} });
+document.addEventListener('keydown', e => {
+  if (e.key==='F11') { e.preventDefault(); toggleFS(); return; }
+  /* 스페이스바 → 다음 라운드 / 정답확인 / 시작·계속 */
+  if (e.key===' ' || e.code==='Space') {
+    e.preventDefault();
+    /* writing 상태: 다음 라운드 또는 정답 확인 버튼 역할 */
+    if (tState==='writing') { handleOvBtn(); return; }
+    /* idle/paused 상태: 시작 또는 계속 */
+    if (tState==='idle' || tState==='paused') { toggleStart(); return; }
+  }
+});
 
 /* ═══ Init ════════════════════════════════════════ */
 function init() {
