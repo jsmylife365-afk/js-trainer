@@ -9,6 +9,9 @@
 <meta name="theme-color" content="#1a1a1a">
 <link rel="manifest" href="manifest.json">
 <title>JS 집중력·기억력 향상훈련</title>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;height:100%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;overflow:hidden;}
@@ -127,6 +130,24 @@ input[type=range]{flex:1;min-width:36px;max-width:90px;}
 /* Fullscreen */
 body:fullscreen #app,body:-webkit-full-screen #app{width:100vw;height:100vh;border-radius:0;}
 #fsFab{position:fixed;bottom:16px;right:16px;z-index:9999;background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:6px 14px;font-size:11px;cursor:pointer;}
+/* 사용자 등록 모달 */
+#nameBg{display:none;position:absolute;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:center;justify-content:center;}
+#nameBg.open{display:flex;}
+#nameBox{background:#fff;border-radius:14px;padding:26px 28px;width:min(88vw,380px);text-align:center;}
+#nameBox h3{font-size:16px;font-weight:500;color:#111;margin-bottom:8px;}
+#nameBox p{font-size:12px;color:#888;margin-bottom:16px;line-height:1.6;}
+#nameInput{width:100%;font-size:14px;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;outline:none;text-align:center;margin-bottom:12px;box-sizing:border-box;}
+#nameInput:focus{border-color:#378ADD;}
+#nameConfirm{width:100%;font-size:13px;padding:10px;background:#378ADD;color:#fff;border:none;border-radius:8px;cursor:pointer;}
+/* 랭킹 리스트 */
+.rank-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;margin-bottom:6px;background:#f8f8f8;}
+.rank-row.me{background:#e6f1fb;border:.5px solid #378ADD;}
+.rank-num{font-size:13px;font-weight:500;color:#888;min-width:24px;text-align:center;}
+.rank-num.top{color:#FF8C00;font-weight:700;}
+.rank-name{flex:1;font-size:13px;color:#111;}
+.rank-score{font-size:13px;font-weight:500;color:#185fa5;}
+.rank-badge{font-size:10px;background:#FFE082;color:#7B5800;padding:1px 6px;border-radius:4px;margin-left:4px;}
+#rankStatus{font-size:11px;color:#888;text-align:center;padding:8px;min-height:20px;}
 /* iOS 전체화면 — position:fixed로 뷰포트 전체 덮기 */
 #app.ios-fs{
   position:fixed !important;
@@ -263,6 +284,16 @@ body:fullscreen #app,body:-webkit-full-screen #app{width:100vw;height:100vh;bord
     <button onclick="openSett()" title="설정" style="font-size:13px;padding:2px 5px;flex-shrink:0;">⚙</button>
   </div>
 
+<!-- 사용자 이름 등록 모달 -->
+<div id="nameBg">
+  <div id="nameBox">
+    <h3>👤 사용자 등록</h3>
+    <p>랭킹 참여를 위해 이름을 입력하세요.<br>나중에 설정에서 변경 가능합니다.</p>
+    <input id="nameInput" type="text" maxlength="12" placeholder="이름 입력 (최대 12자)">
+    <button id="nameConfirm" onclick="confirmName()">시작하기</button>
+  </div>
+</div>
+
 <!-- Settings modal -->
 <div id="settBg">
   <div id="settBox">
@@ -270,6 +301,7 @@ body:fullscreen #app,body:-webkit-full-screen #app{width:100vw;height:100vh;bord
       <button class="stab on" id="stab0" onclick="showStab(0)">사용 방법</button>
       <button class="stab" id="stab1" onclick="showStab(1)">데이터 팩</button>
       <button class="stab" id="stab2" onclick="showStab(2)">앱 정보</button>
+      <button class="stab" id="stab3" onclick="showStab(3)">🏆 랭킹</button>
     </div>
     <div id="settBody">
 
@@ -350,6 +382,25 @@ body:fullscreen #app,body:-webkit-full-screen #app{width:100vw;height:100vh;bord
         <p>'JS 집중력·기억력 향상훈련'의 소유권 및 지적 재산권은 개발자 <b>조성형</b>에게 있습니다.</p>
         <h4>문의</h4>
         <p><a href="mailto:jsmylife365@gmail.com" style="color:#185fa5;">jsmylife365@gmail.com</a></p>
+      </div>
+
+      <!-- 랭킹 탭 -->
+      <div id="sc3" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div>
+            <p style="font-size:12px;color:#555;">내 이름: <b id="myNameDisplay" style="color:#185fa5;">-</b></p>
+            <p style="font-size:12px;color:#555;">누적 점수: <b id="myScoreDisplay" style="color:#185fa5;">0점</b></p>
+          </div>
+          <button onclick="openNameModal()" style="font-size:11px;padding:4px 10px;">이름 변경</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <button onclick="loadRanking('all')" id="rbtn-all" class="active" style="flex:1;font-size:11px;padding:5px 0;">전체 랭킹</button>
+          <button onclick="loadRanking('week')" id="rbtn-week" style="flex:1;font-size:11px;padding:5px 0;">이번 주</button>
+          <button onclick="loadRanking('today')" id="rbtn-today" style="flex:1;font-size:11px;padding:5px 0;">오늘</button>
+        </div>
+        <div id="rankStatus">랭킹을 불러오는 중...</div>
+        <div id="rankList"></div>
+        <p style="font-size:10px;color:#aaa;text-align:center;margin-top:10px;">훈련 완료 시 자동으로 점수가 등록됩니다</p>
       </div>
 
     </div>
@@ -685,10 +736,11 @@ function closeAd() {
 function openSett() { closeNav(); document.getElementById('settBg').classList.add('open'); }
 function closeSett() { document.getElementById('settBg').classList.remove('open'); }
 function showStab(n) {
-  [0,1,2].forEach(i => {
+  [0,1,2,3].forEach(i => {
     document.getElementById('sc'+i).style.display = i===n ? 'block' : 'none';
     document.getElementById('stab'+i).className = 'stab' + (i===n ? ' on' : '');
   });
+  if (n===3) loadRanking('all');
 }
 function exitApp() {
   if (confirm('앱을 종료하시겠습니까?')) { window.close(); setTimeout(()=>{ location.href='about:blank'; },200); }
@@ -1160,7 +1212,7 @@ function showRestOv(isLast) {
     s--; document.getElementById('ovN').textContent=s;
     if (s<=0) {
       clearInterval(riId); OV.style.display='none';
-      if (isLast) showAd(fullReset);
+      if (isLast) { addScore(1); submitScore(); showAd(fullReset); }
       else { phase++; startPhase(); }
     }
   }, 1000);
@@ -1174,7 +1226,7 @@ function showThink() {
   let s=REST;
   riId=setInterval(() => {
     s--; document.getElementById('ovN').textContent=s;
-    if (s<=0) { clearInterval(riId); showWrite(); }
+    if (s<=0) { clearInterval(riId); addScore(1); showWrite(); }
   }, 1000);
 }
 function showWrite() {
@@ -1201,7 +1253,7 @@ function handleOvBtn() {
   if (tState!=='writing') return;
   const isRD=TM==='memory'||TM==='sentence';
   const isLast=isRD?(mRound>=TOTAL_RDS-1):(phase>=2);
-  if (isLast) { showAd(showAnswers); return; }
+  if (isLast) { submitScore(); showAd(showAnswers); return; }
   OV.style.display='none';
   if (TM==='memory') { mRound++; updDotArea(); startMRound(); }
   else if (TM==='sentence') { mRound++; updDotArea(); startSRound(); }
@@ -1317,7 +1369,7 @@ function handleEnd() {
                   (TM==='memory' && allRoundWords.some(a=>a&&a.length>0)) ||
                   (TM==='sentence' && allRoundData.some(a=>a));
 
-  showAd(() => {
+  submitScore(); showAd(() => {
     if (!hasData) { fullReset(); return; }
     showAnswers();
   });
@@ -1453,6 +1505,7 @@ function toggleStart() {
 }
 
 function fullReset() {
+  sessionScore=0;
   tState='idle'; stopAll();
   OV.style.display='none';
   document.getElementById('ov-msg').style.display='flex';
@@ -1507,6 +1560,7 @@ function init() {
   activeDS = 'default'; updDsBadge();
   switchTM('vision');
   /* initDB 완료 후 마지막 팩 복원 */
+  initRanking();
   initDB().then(() => {
     try {
       const saved = localStorage.getItem('jstr_lastDS');
@@ -1530,6 +1584,181 @@ window.addEventListener('resize', () => {
   }
 });
 setTimeout(init, 100);
+
+/* ══════════════════════════════════════════════════════
+   Firebase 설정 — 아래 값을 본인 Firebase 프로젝트로 교체
+   (Firebase 콘솔 → 프로젝트 설정 → 웹 앱 추가 → 구성 복사)
+══════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDDE_fLiFaXlQ6bP8g3IIrH2bKiz0eVkRk",
+  authDomain: "js-trainer-b0139.firebaseapp.com",
+  projectId: "js-trainer-b0139",
+  storageBucket: "js-trainer-b0139.firebasestorage.app",
+  messagingSenderId: "800427483325",
+  appId: "1:800427483325:web:5f8c8719ae561d163417d4",
+  measurementId: "G-GVNB67TBCX"
+};
+
+let _fbApp = null, _db = null;
+function initFirebase() {
+  try {
+    if (!_fbApp && FB_CONFIG.apiKey !== "YOUR_API_KEY") {
+      _fbApp = firebase.initializeApp(FB_CONFIG);
+      _db = firebase.firestore();
+    }
+  } catch(e) { console.warn('Firebase init failed', e); }
+}
+
+/* ══ 사용자 이름 & 점수 ════════════════════════════════ */
+let userName = '';
+let sessionScore = 0;  /* 현재 세션 점수 */
+let totalScore = 0;    /* 누적 점수 (localStorage) */
+
+function loadUserData() {
+  try {
+    userName = localStorage.getItem('jstr_username') || '';
+    totalScore = parseInt(localStorage.getItem('jstr_totalscore') || '0');
+  } catch(e) {}
+}
+function saveUserData() {
+  try {
+    localStorage.setItem('jstr_username', userName);
+    localStorage.setItem('jstr_totalscore', String(totalScore));
+  } catch(e) {}
+}
+
+/* ══ 이름 등록 모달 ════════════════════════════════════ */
+function openNameModal() {
+  closeSett();
+  const bg = document.getElementById('nameBg');
+  bg.classList.add('open');
+  const inp = document.getElementById('nameInput');
+  inp.value = userName || '';
+  setTimeout(() => inp.focus(), 100);
+}
+function closeNameModal() {
+  document.getElementById('nameBg').classList.remove('open');
+}
+function confirmName() {
+  const inp = document.getElementById('nameInput');
+  const name = inp.value.trim();
+  if (!name) { inp.style.borderColor='#D32F2F'; return; }
+  userName = name;
+  saveUserData();
+  closeNameModal();
+  updateNameDisplay();
+}
+document.getElementById('nameInput').addEventListener('keydown', e => {
+  if (e.key==='Enter') confirmName();
+});
+
+function updateNameDisplay() {
+  const el = document.getElementById('myNameDisplay');
+  const sc = document.getElementById('myScoreDisplay');
+  if (el) el.textContent = userName || '(미등록)';
+  if (sc) sc.textContent = totalScore + '점';
+}
+
+/* ══ 점수 계산 ════════════════════════════════════════
+   시력강화: 3단계 완료 = 3점 (단계당 1점)
+   집중력:   3단계 완료 = 3점
+   기억력:   라운드당 1점 (최대 10점)
+   문장기억: 라운드당 1점 (최대 10점)
+══════════════════════════════════════════════════════ */
+function addScore(points) {
+  sessionScore += points;
+  totalScore += points;
+  saveUserData();
+}
+
+/* ══ 점수 서버 전송 ════════════════════════════════════ */
+async function submitScore() {
+  if (!userName || sessionScore <= 0) return;
+  if (!_db) { initFirebase(); if(!_db) return; }
+  try {
+    const now = new Date();
+    const docRef = _db.collection('scores').doc();
+    await docRef.set({
+      name: userName,
+      score: sessionScore,
+      total: totalScore,
+      tm: TM_NAMES[TM] || TM,
+      ts: firebase.firestore.FieldValue.serverTimestamp(),
+      date: now.toISOString().slice(0,10),   /* YYYY-MM-DD */
+      week: getWeekStr(now)
+    });
+    console.log('점수 전송 완료:', sessionScore);
+  } catch(e) { console.warn('점수 전송 실패', e); }
+}
+function getWeekStr(d) {
+  const jan1 = new Date(d.getFullYear(),0,1);
+  const wk = Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);
+  return d.getFullYear() + '-W' + String(wk).padStart(2,'0');
+}
+
+/* ══ 랭킹 불러오기 ════════════════════════════════════ */
+async function loadRanking(period) {
+  /* 버튼 활성화 */
+  ['all','week','today'].forEach(p => {
+    const btn = document.getElementById('rbtn-'+p);
+    if (btn) btn.className = 'stab' + (p===period ? ' on' : '');
+  });
+  const statusEl = document.getElementById('rankStatus');
+  const listEl = document.getElementById('rankList');
+  updateNameDisplay();
+  if (!_db) { initFirebase(); }
+  if (!_db) {
+    statusEl.textContent = 'Firebase 미설정 — 설정 후 사용 가능합니다';
+    listEl.innerHTML = '';
+    return;
+  }
+  statusEl.textContent = '불러오는 중...';
+  listEl.innerHTML = '';
+  try {
+    const now = new Date();
+    let q = _db.collection('scores');
+    if (period==='today') q = q.where('date','==',now.toISOString().slice(0,10));
+    else if (period==='week') q = q.where('week','==',getWeekStr(now));
+    /* 이름별 최고점수 집계 */
+    const snap = await q.orderBy('score','desc').limit(200).get();
+    const map = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      if (!map[d.name] || map[d.name] < d.score) map[d.name] = d.score;
+    });
+    const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,30);
+    if (!sorted.length) { statusEl.textContent='아직 등록된 기록이 없습니다.'; return; }
+    statusEl.textContent = '';
+    let myRank = -1;
+    sorted.forEach(([name,score],i) => {
+      const isMe = name===userName;
+      if (isMe) myRank = i+1;
+      const row = document.createElement('div');
+      row.className = 'rank-row' + (isMe?' me':'');
+      const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+      row.innerHTML = `
+        <span class="rank-num ${i<3?'top':''}">${medal||i+1}</span>
+        <span class="rank-name">${name}${isMe?'<span class="rank-badge">나</span>':''}</span>
+        <span class="rank-score">${score}점</span>`;
+      listEl.appendChild(row);
+    });
+    if (myRank>0) statusEl.textContent = `내 순위: ${myRank}위 / ${sorted.length}명`;
+    else if (userName) statusEl.textContent = `${userName}님은 아직 기록이 없습니다`;
+  } catch(e) {
+    statusEl.textContent = '오류: ' + e.message;
+  }
+}
+
+/* ══ 초기화 ════════════════════════════════════════════ */
+function initRanking() {
+  loadUserData();
+  initFirebase();
+  /* 첫 실행 시 이름 등록 안내 */
+  if (!userName) {
+    setTimeout(openNameModal, 800);
+  }
+  updateNameDisplay();
+}
 </script>
 
 <script>
