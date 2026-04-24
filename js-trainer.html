@@ -1673,7 +1673,7 @@ function updateScoreBadge() {
   const el = document.getElementById('scoreTxt');
   if (!el) return;
   /* 오늘 날짜 기준 세션 점수 표시 */
-  const today = new Date().toISOString().slice(0,10);
+  const today = getKSTDateStr();           /* KST 기준 오늘 */
   let todayScore = 0;
   try {
     const saved = localStorage.getItem('jstr_todayscore');
@@ -1696,7 +1696,7 @@ function addScore(points) {
   saveUserData();
   /* 오늘 날짜 점수 누적 */
   try {
-    const today = new Date().toISOString().slice(0,10);
+    const today = getKSTDateStr();  /* KST 기준 */
     const savedDate = localStorage.getItem('jstr_todaydate');
     let todayScore = 0;
     if (savedDate === today) todayScore = parseInt(localStorage.getItem('jstr_todayscore')||'0');
@@ -1729,10 +1729,19 @@ async function submitScore() {
     console.log('점수 전송 완료:', sessionScore);
   } catch(e) { console.warn('점수 전송 실패', e); }
 }
+/* ── KST(한국 시간, UTC+9) 기준 날짜/주 계산 ── */
+function getKST() {
+  /* 어느 기기에서든 한국 시간 기준으로 통일 */
+  return new Date(Date.now() + 9 * 60 * 60 * 1000);
+}
+function getKSTDateStr() {
+  return getKST().toISOString().slice(0, 10);   /* YYYY-MM-DD KST */
+}
 function getWeekStr(d) {
-  const jan1 = new Date(d.getFullYear(),0,1);
-  const wk = Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);
-  return d.getFullYear() + '-W' + String(wk).padStart(2,'0');
+  /* d = KST Date 객체 */
+  const jan1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const wk = Math.ceil(((d - jan1) / 86400000 + jan1.getUTCDay() + 1) / 7);
+  return d.getUTCFullYear() + '-W' + String(wk).padStart(2, '0');
 }
 
 /* ══ 랭킹 불러오기 ════════════════════════════════════ */
@@ -1754,9 +1763,9 @@ async function loadRanking(period) {
   statusEl.textContent = '불러오는 중...';
   listEl.innerHTML = '';
   try {
-    const now = new Date();
-    const todayStr = now.toISOString().slice(0,10);
-    const weekStr = getWeekStr(now);
+    const kstNow = getKST();                 /* 한국 시간 기준 */
+    const todayStr = getKSTDateStr();
+    const weekStr = getWeekStr(kstNow);
     /* 클라이언트 필터링으로 변경 (복합 인덱스 불필요) */
     const snap = await _fdb.collection('scores')
       .orderBy('score','desc').limit(500).get();
@@ -3058,7 +3067,7 @@ function updateScoreBadge() {
   const el = document.getElementById('scoreTxt');
   if (!el) return;
   /* 오늘 날짜 기준 세션 점수 표시 */
-  const today = new Date().toISOString().slice(0,10);
+  const today = getKSTDateStr();           /* KST 기준 오늘 */
   let todayScore = 0;
   try {
     const saved = localStorage.getItem('jstr_todayscore');
@@ -3114,10 +3123,19 @@ async function submitScore() {
     console.log('점수 전송 완료:', sessionScore);
   } catch(e) { console.warn('점수 전송 실패', e); }
 }
+/* ── KST(한국 시간, UTC+9) 기준 날짜/주 계산 ── */
+function getKST() {
+  /* 어느 기기에서든 한국 시간 기준으로 통일 */
+  return new Date(Date.now() + 9 * 60 * 60 * 1000);
+}
+function getKSTDateStr() {
+  return getKST().toISOString().slice(0, 10);   /* YYYY-MM-DD KST */
+}
 function getWeekStr(d) {
-  const jan1 = new Date(d.getFullYear(),0,1);
-  const wk = Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);
-  return d.getFullYear() + '-W' + String(wk).padStart(2,'0');
+  /* d = KST Date 객체 */
+  const jan1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const wk = Math.ceil(((d - jan1) / 86400000 + jan1.getUTCDay() + 1) / 7);
+  return d.getUTCFullYear() + '-W' + String(wk).padStart(2, '0');
 }
 
 /* ══ 랭킹 불러오기 ════════════════════════════════════ */
@@ -3139,9 +3157,9 @@ async function loadRanking(period) {
   statusEl.textContent = '불러오는 중...';
   listEl.innerHTML = '';
   try {
-    const now = new Date();
-    const todayStr = now.toISOString().slice(0,10);
-    const weekStr = getWeekStr(now);
+    const kstNow = getKST();                 /* 한국 시간 기준 */
+    const todayStr = getKSTDateStr();
+    const weekStr = getWeekStr(kstNow);
     /* 클라이언트 필터링으로 변경 (복합 인덱스 불필요) */
     const snap = await _fdb.collection('scores')
       .orderBy('score','desc').limit(500).get();
