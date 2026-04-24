@@ -189,6 +189,10 @@ body:fullscreen #app,body:-webkit-full-screen #app{width:100vw;height:100vh;bord
       <span id="dsDot" style="color:#378ADD;font-size:8px;">●</span>
       <span id="dsTxt">기본 (내장)</span>
     </div>
+    <div id="scoreBadge" style="position:absolute;bottom:8px;right:8px;z-index:10;font-size:10px;background:rgba(255,255,255,.92);border:.5px solid #ddd;border-radius:4px;padding:2px 8px;color:#666;display:flex;align-items:center;gap:4px;">
+      <span style="color:#FFB300;font-size:8px;">★</span>
+      <span id="scoreTxt">오늘 0점</span>
+    </div>
 
     <!-- Ad overlay (shows before answer screens) -->
     <div id="adOV">
@@ -348,17 +352,17 @@ body:fullscreen #app,body:-webkit-full-screen #app{width:100vw;height:100vh;bord
         <div class="step"><div class="snum">3</div><p>[불러오기 &amp; 저장] 클릭 → 완료 메시지 확인</p></div>
         <div class="step"><div class="snum">4</div><p>데이터 목록에서 새 팩을 선택하여 훈련 시작</p></div>
         <h4>공통 URL (앞 주소 + 아래 파일명)</h4>
-        <p style="background:#F3F3F3;padding:7px 10px;border-radius:5px;font-family:monospace;font-size:11px;word-break:break-all;margin-bottom:10px;">https://jsmylife365-afk.github.io/js-trainer/</p>
+        <p style="background:#F3F3F3;padding:7px 10px;border-radius:5px;font-family:monospace;font-size:11px;word-break:break-all;margin-bottom:10px;">https://jsmylife365.github.io/js-trainer/</p>
         <h4>사용 가능한 데이터 팩</h4>
         <ul style="margin-bottom:10px;">
           <li><b>한글_일반.csv</b> — 일반 한국어 낱말(5만 개) 및 문장(3만 개)</li>
           <li><b>성경_창세기.csv ~ 성경_요한계시록.csv</b> — 성경 66권 전체 개별 팩</li>
         </ul>
         <p style="font-size:11px;color:#888;">예) 한글 일반팩 URL:<br>
-        <span style="font-family:monospace;word-break:break-all;">https://jsmylife365-afk.github.io/js-trainer/한글_일반.csv</span></p>
+        <span style="font-family:monospace;word-break:break-all;">https://jsmylife365.github.io/js-trainer/한글_일반.csv</span></p>
         <h4>WORKSHEET 다운로드</h4>
         <p style="font-size:11px;color:#555;">웹 브라우저 주소창에 아래 URL을 직접 입력하여 다운로드하세요.<br>
-        <span style="font-family:monospace;word-break:break-all;">https://jsmylife365-afk.github.io/js-trainer/WORKSHEET.jpg</span></p>
+        <span style="font-family:monospace;word-break:break-all;">https://jsmylife365.github.io/js-trainer/WORKSHEET.jpg</span></p>
       </div>
 
       <!-- 앱 정보 탭 -->
@@ -1657,6 +1661,22 @@ function updateNameDisplay() {
   const sc = document.getElementById('myScoreDisplay');
   if (el) el.textContent = userName || '(미등록)';
   if (sc) sc.textContent = totalScore + '점';
+  /* 오늘 점수 뱃지 업데이트 */
+  updateScoreBadge();
+}
+function updateScoreBadge() {
+  const el = document.getElementById('scoreTxt');
+  if (!el) return;
+  /* 오늘 날짜 기준 세션 점수 표시 */
+  const today = new Date().toISOString().slice(0,10);
+  let todayScore = 0;
+  try {
+    const saved = localStorage.getItem('jstr_todayscore');
+    const savedDate = localStorage.getItem('jstr_todaydate');
+    if (savedDate === today) todayScore = parseInt(saved||'0');
+    else { localStorage.setItem('jstr_todaydate', today); localStorage.setItem('jstr_todayscore','0'); }
+  } catch(e) {}
+  el.textContent = '오늘 ' + todayScore + '점';
 }
 
 /* ══ 점수 계산 ════════════════════════════════════════
@@ -1669,6 +1689,17 @@ function addScore(points) {
   sessionScore += points;
   totalScore += points;
   saveUserData();
+  /* 오늘 날짜 점수 누적 */
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    const savedDate = localStorage.getItem('jstr_todaydate');
+    let todayScore = 0;
+    if (savedDate === today) todayScore = parseInt(localStorage.getItem('jstr_todayscore')||'0');
+    todayScore += points;
+    localStorage.setItem('jstr_todaydate', today);
+    localStorage.setItem('jstr_todayscore', String(todayScore));
+  } catch(e) {}
+  updateScoreBadge();
 }
 
 /* ══ 점수 서버 전송 ════════════════════════════════════ */
@@ -1678,13 +1709,16 @@ async function submitScore() {
   try {
     const now = new Date();
     const docRef = _db.collection('scores').doc();
+    const today = now.toISOString().slice(0,10);
+    const todayScore = parseInt(localStorage.getItem('jstr_todayscore')||'0');
     await docRef.set({
       name: userName,
       score: sessionScore,
       total: totalScore,
+      todayTotal: todayScore,
       tm: TM_NAMES[TM] || TM,
       ts: firebase.firestore.FieldValue.serverTimestamp(),
-      date: now.toISOString().slice(0,10),   /* YYYY-MM-DD */
+      date: today,
       week: getWeekStr(now)
     });
     console.log('점수 전송 완료:', sessionScore);
@@ -1758,6 +1792,7 @@ function initRanking() {
     setTimeout(openNameModal, 800);
   }
   updateNameDisplay();
+  updateScoreBadge();
 }
 </script>
 
