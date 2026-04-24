@@ -1603,12 +1603,12 @@ const FB_CONFIG = {
   measurementId:     "G-GVNB67TBCX"
 };
 
-let _fbApp = null, _db = null;
+let _fbApp = null, _fdb = null;
 function initFirebase() {
   try {
     if (!_fbApp && FB_CONFIG.apiKey !== "YOUR_API_KEY") {
       _fbApp = firebase.initializeApp(FB_CONFIG);
-      _db = firebase.firestore();
+      _fdb = firebase.firestore();
     }
   } catch(e) { console.warn('Firebase init failed', e); }
 }
@@ -1705,10 +1705,10 @@ function addScore(points) {
 /* ══ 점수 서버 전송 ════════════════════════════════════ */
 async function submitScore() {
   if (!userName || sessionScore <= 0) return;
-  if (!_db) { initFirebase(); if(!_db) return; }
+  if (!_fdb) { initFirebase(); if(!_fdb) return; }
   try {
     const now = new Date();
-    const docRef = _db.collection('scores').doc();
+    const docRef = _fdb.collection('scores').doc();
     const today = now.toISOString().slice(0,10);
     const todayScore = parseInt(localStorage.getItem('jstr_todayscore')||'0');
     await docRef.set({
@@ -1740,8 +1740,8 @@ async function loadRanking(period) {
   const statusEl = document.getElementById('rankStatus');
   const listEl = document.getElementById('rankList');
   updateNameDisplay();
-  if (!_db) { initFirebase(); }
-  if (!_db) {
+  if (!_fdb) { initFirebase(); }
+  if (!_fdb) {
     statusEl.textContent = 'Firebase 미설정 — 설정 후 사용 가능합니다';
     listEl.innerHTML = '';
     return;
@@ -1750,7 +1750,7 @@ async function loadRanking(period) {
   listEl.innerHTML = '';
   try {
     const now = new Date();
-    let q = _db.collection('scores');
+    let q = _fdb.collection('scores');
     if (period==='today') q = q.where('date','==',now.toISOString().slice(0,10));
     else if (period==='week') q = q.where('week','==',getWeekStr(now));
     /* 이름별 최고점수 집계 */
