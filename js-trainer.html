@@ -1216,7 +1216,8 @@ function showRestOv(isLast) {
     s--; document.getElementById('ovN').textContent=s;
     if (s<=0) {
       clearInterval(riId); OV.style.display='none';
-      if (isLast) { addScore(1); submitScore(); showAd(fullReset); }
+      addScore(1); /* 시력강화: 단계 완료마다 1점 (1,2,3단계 각 1점) */
+      if (isLast) { submitScore(); showAd(fullReset); }
       else { phase++; startPhase(); }
     }
   }, 1000);
@@ -1713,9 +1714,9 @@ async function submitScore() {
     const todayScore = parseInt(localStorage.getItem('jstr_todayscore')||'0');
     await docRef.set({
       name: userName,
-      score: sessionScore,
-      total: totalScore,
-      todayTotal: todayScore,
+      score: totalScore,        /* 누적 총점 (랭킹 기준) */
+      session: sessionScore,    /* 이번 세션 점수 */
+      todayTotal: todayScore,   /* 오늘 누적 점수 */
       tm: TM_NAMES[TM] || TM,
       ts: firebase.firestore.FieldValue.serverTimestamp(),
       date: today,
@@ -1750,14 +1751,18 @@ async function loadRanking(period) {
   listEl.innerHTML = '';
   try {
     const now = new Date();
-    let q = _fdb.collection('scores');
-    if (period==='today') q = q.where('date','==',now.toISOString().slice(0,10));
-    else if (period==='week') q = q.where('week','==',getWeekStr(now));
-    /* 이름별 최고점수 집계 */
-    const snap = await q.orderBy('score','desc').limit(200).get();
+    const todayStr = now.toISOString().slice(0,10);
+    const weekStr = getWeekStr(now);
+    /* 클라이언트 필터링으로 변경 (복합 인덱스 불필요) */
+    const snap = await _fdb.collection('scores')
+      .orderBy('score','desc').limit(500).get();
     const map = {};
     snap.forEach(doc => {
       const d = doc.data();
+      /* 기간 필터 */
+      if (period==='today' && d.date !== todayStr) return;
+      if (period==='week' && d.week !== weekStr) return;
+      /* 이름별 최고점수 집계 */
       if (!map[d.name] || map[d.name] < d.score) map[d.name] = d.score;
     });
     const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,30);
