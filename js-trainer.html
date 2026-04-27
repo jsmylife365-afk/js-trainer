@@ -42,7 +42,7 @@ canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
 #SH{position:absolute;transform:translate(-50%,-50%);border-radius:50%;opacity:0;}
 #WE{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-weight:700;color:#111;letter-spacing:.04em;pointer-events:none;opacity:0;}
 #slots{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;}
-.badge{font-size:clamp(9px,1.1vw,11px);background:#fff;border:.5px solid #ddd;border-radius:4px;padding:2px 8px;color:#666;}
+.badge{font-size:clamp(9px,1.1vw,11px);background:#fff;border:1px solid #2a9e00;border-radius:4px;padding:2px 8px;color:#1a1a1a;font-weight:500;}
 #bc{font-weight:500;color:#111;min-width:58px;text-align:center;}
 /* Controls bar */
 /* ── 컨트롤바: 가로=1줄, 세로=2줄 ───────────── */
@@ -53,8 +53,8 @@ canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
   align-items:center;
   gap:3px 4px;
   padding:4px 8px;
-  background:#fff;
-  border-top:.5px solid #e0e0e0;
+  background:#66FF33;
+  border-top:1.5px solid #4dc922;
   overflow:visible;
 }
 /* 가로 모드: 1줄 고정 */
@@ -77,9 +77,9 @@ canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
 @media (orientation:landscape){
   #cbar .row2-sep{ display:none; }
 }
-button{font-size:clamp(9px,1vw,10px);padding:2px 6px;border:.5px solid #bbb;border-radius:5px;background:transparent;cursor:pointer;white-space:nowrap;transition:background .1s;}
+button{font-size:clamp(9px,1vw,10px);padding:2px 6px;border:1px solid #2a9e00;border-radius:5px;background:transparent;cursor:pointer;white-space:nowrap;transition:background .1s;}
 button:hover{background:#f0f0f0;}
-button.active{background:#e6f1fb;color:#185fa5;border-color:#185fa5;}
+button.active{background:#cce0ff;color:#0047cc;border-color:#0047cc;font-weight:600;}
 .sep{width:.5px;height:14px;background:#ddd;flex-shrink:0;}
 input[type=range]{flex:1;min-width:36px;max-width:90px;}
 /* Training overlay */
@@ -169,14 +169,16 @@ body:fullscreen #app,body:-webkit-full-screen #app{width:100vw;height:100vh;bord
     <canvas id="gc"></canvas>
 
     <!-- Top badges -->
-    <div style="position:absolute;top:6px;left:8px;display:flex;gap:5px;z-index:10;">
-      <span class="badge" id="ba">왕복 0회</span>
-      <span class="badge" id="bb">1 / 72</span>
-      <span class="badge" id="bc">⏱ 60s</span>
-    </div>
-    <div style="position:absolute;top:6px;right:8px;z-index:10;display:flex;align-items:center;gap:7px;">
-      <div id="dotArea" style="display:flex;gap:3px;align-items:center;"></div>
-      <span id="tlabel" style="font-size:clamp(10px,1.2vw,12px);font-weight:500;color:#666;">시력강화 훈련 · 1단계 가로</span>
+    <div style="position:absolute;top:0;left:0;width:100%;height:32px;background:#66FF33;border-bottom:1.5px solid #4dc922;display:flex;align-items:center;justify-content:space-between;padding:0 8px;box-sizing:border-box;z-index:10;">
+      <div style="display:flex;gap:5px;align-items:center;">
+        <span class="badge" id="ba">왕복 0회</span>
+        <span class="badge" id="bb">1 / 72</span>
+        <span class="badge" id="bc">⏱ 60s</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;">
+        <div id="dotArea" style="display:flex;gap:3px;align-items:center;"></div>
+        <span id="tlabel" style="font-size:clamp(10px,1.2vw,12px);font-weight:700;color:#111;">시력강화 훈련 · 1단계 가로</span>
+      </div>
     </div>
 
     <!-- Training elements -->
@@ -229,29 +231,29 @@ body:fullscreen #app,body:-webkit-full-screen #app{width:100vw;height:100vh;bord
   <div id="cbar">
     <!-- 1줄: 훈련별 컨트롤 + 속도 -->
     <div id="cv" style="display:flex;align-items:center;gap:3px;flex-shrink:0;">
-      <span style="font-size:10px;color:#888;">도형</span>
+      <span style="font-size:10px;color:#111;font-weight:700;">도형</span>
       <button id="bsh-c" class="active" onclick="setShape('circle')">원</button>
       <button id="bsh-d" onclick="setShape('dot')">점</button>
       <button id="bsh-a" onclick="setShape('alt')">교차</button>
-      <span style="font-size:10px;color:#888;margin-left:4px;">점멸</span>
+      <span style="font-size:10px;color:#111;font-weight:700;margin-left:4px;">점멸</span>
       <button id="bbc1" class="active" onclick="setBC(1)">1</button>
       <button id="bbc2" onclick="setBC(2)">2</button>
       <button id="bbc3" onclick="setBC(3)">3</button>
     </div>
     <div id="cw" style="display:none;align-items:center;gap:3px;flex-shrink:0;">
-      <span id="wlLabel" style="font-size:10px;color:#888;">글자</span>
+      <span id="wlLabel" style="font-size:10px;color:#111;font-weight:700;">글자</span>
       <button id="bwl2" class="active" onclick="setWL(2)">2</button>
       <button id="bwl3" onclick="setWL(3)">3</button>
       <button id="bwl4" onclick="setWL(4)">4</button>
       <button id="bwl5" onclick="setWL(5)">5</button>
       <button id="bwl6" onclick="setWL(6)">6</button>
-      <span style="font-size:10px;color:#888;margin-left:4px;">수준</span>
+      <span style="font-size:10px;color:#111;font-weight:700;margin-left:4px;">수준</span>
       <button id="blv하" class="active" onclick="setLV('하')">하</button>
       <button id="blv중" onclick="setLV('중')">중</button>
       <button id="blv상" onclick="setLV('상')">상</button>
     </div>
     <div class="sep"></div>
-    <span style="font-size:10px;color:#888;flex-shrink:0;">속도</span>
+    <span style="font-size:10px;color:#111;font-weight:700;flex-shrink:0;">속도</span>
     <input id="spsl" type="range" min="1" max="5" step="1" value="3" oninput="setSP(this.value)">
     <span id="splb" style="font-size:10px;font-weight:500;flex-shrink:0;min-width:36px;">보통</span>
     <!-- 세로 모드 줄바꿈 포인트 -->
@@ -262,7 +264,7 @@ body:fullscreen #app,body:-webkit-full-screen #app{width:100vw;height:100vh;bord
     <div class="sep"></div>
     <!-- 훈련 선택 (dropup 포함) -->
     <div style="position:relative;flex-shrink:0;">
-      <button onclick="toggleNav('tm',event)" style="display:flex;align-items:center;gap:2px;background:#e6f1fb;color:#185fa5;border-color:#185fa5;font-weight:500;"><span id="tnLbl">시력강화</span><span style="font-size:8px;">▲</span></button>
+      <button onclick="toggleNav('tm',event)" style="display:flex;align-items:center;gap:2px;background:#cce0ff;color:#0047cc;border-color:#0047cc;font-weight:600;"><span id="tnLbl">시력강화</span><span style="font-size:8px;">▲</span></button>
       <div id="navTM" class="dropup" style="right:0;left:auto;">
         <div class="ditem active" id="nt0" onclick="switchTM('vision')"><span id="ni0">●</span><span>시력강화 훈련</span></div>
         <div class="ddiv"></div>
@@ -286,9 +288,9 @@ body:fullscreen #app,body:-webkit-full-screen #app{width:100vw;height:100vh;bord
       </div>
     </div>
     <div class="sep"></div>
-    <button onclick="toggleFS()" id="fsbtn" title="전체화면" style="flex-shrink:0;">⛶</button>
-    <div class="sep"></div>
     <button onclick="openSett()" title="설정" style="font-size:13px;padding:2px 5px;flex-shrink:0;">⚙</button>
+    <div class="sep"></div>
+    <button onclick="toggleFS()" id="fsbtn" title="전체화면" style="flex-shrink:0;">⛶</button>
   </div>
 
 <!-- 사용자 이름 등록 모달 -->
@@ -1404,7 +1406,7 @@ function updTimerB() {
   const el=document.getElementById('bc');
   el.textContent='⏱ '+remSec+'s';
   el.style.color=remSec<=10?'#D32F2F':'#111';
-  el.style.borderColor=remSec<=10?'#D32F2F':'#ddd';
+  el.style.borderColor=remSec<=10?'#D32F2F':'#2a9e00';
 }
 function updDsBadge() {
   const label=activeDS==='default'?'기본 (내장)':activeDS;
@@ -1425,13 +1427,13 @@ function updPhUI() {
     document.getElementById('bb').textContent='단어 —개';
     document.getElementById('bc').textContent='회차 —/'+MEM_CYCLES;
     document.getElementById('bc').style.color='#111';
-    document.getElementById('bc').style.borderColor='#ddd';
+    document.getElementById('bc').style.borderColor='#2a9e00';
   } else {
     document.getElementById('ba').textContent='라운드 —/'+TOTAL_RDS;
     document.getElementById('bb').textContent='문장 '+wl+'개';
     document.getElementById('bc').textContent='— / —';
     document.getElementById('bc').style.color='#111';
-    document.getElementById('bc').style.borderColor='#ddd';
+    document.getElementById('bc').style.borderColor='#2a9e00';
   }
 }
 function updDotArea() {
@@ -2798,7 +2800,7 @@ function updTimerB() {
   const el=document.getElementById('bc');
   el.textContent='⏱ '+remSec+'s';
   el.style.color=remSec<=10?'#D32F2F':'#111';
-  el.style.borderColor=remSec<=10?'#D32F2F':'#ddd';
+  el.style.borderColor=remSec<=10?'#D32F2F':'#2a9e00';
 }
 function updDsBadge() {
   const label=activeDS==='default'?'기본 (내장)':activeDS;
@@ -2819,13 +2821,13 @@ function updPhUI() {
     document.getElementById('bb').textContent='단어 —개';
     document.getElementById('bc').textContent='회차 —/'+MEM_CYCLES;
     document.getElementById('bc').style.color='#111';
-    document.getElementById('bc').style.borderColor='#ddd';
+    document.getElementById('bc').style.borderColor='#2a9e00';
   } else {
     document.getElementById('ba').textContent='라운드 —/'+TOTAL_RDS;
     document.getElementById('bb').textContent='문장 '+wl+'개';
     document.getElementById('bc').textContent='— / —';
     document.getElementById('bc').style.color='#111';
-    document.getElementById('bc').style.borderColor='#ddd';
+    document.getElementById('bc').style.borderColor='#2a9e00';
   }
 }
 function updDotArea() {
